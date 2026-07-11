@@ -1,0 +1,75 @@
+<!-- Front Template Section -->
+<div id="kanji_with_furigana" class="kanji-style"></div>
+<div class="spacer"></div>
+<!-- Back Template Section -->
+<div id="back" class="meaning-style">
+  <div id="meaning" class="meaning-style"></div>
+  <div id="readings" class="readings-style"></div>
+  <div id="word_examples" class="example-style"></div>
+<div id="radicals" class="radicals-style"></div>
+</div>
+
+<script>
+function updateBack() {
+  const input = "{{Content}}";
+  if (!input || !input.includes("|")) {
+    console.error("Invalid input format");
+    return;
+  }
+
+  const fields = input.split("|").reduce((acc, field) => {
+    const [key, value] = field.split(":");
+    acc[key] = value;
+    return acc;
+  }, {});
+  
+  document.getElementById("kanji_with_furigana").innerHTML = `<ruby>${fields.Kanji}<rt>${fields.Furigana}</rt></ruby>`;
+  document.getElementById("meaning").innerText = "Meaning: " + fields.Meaning;
+
+  const onYomi = fields.OnYomi.split(',').join(', ');
+  const kunYomi = fields.KunYomi.split(',').join(', ');
+  
+  document.getElementById("readings").innerHTML = `OnYomi ➔ ${onYomi}<br>KunYomi ➔ ${kunYomi}`;
+
+  const exampleWords = fields.WordExamples ? fields.WordExamples.split(",") : [];
+  const exampleTranslations = fields.WordTranslations ? fields.WordTranslations.split(",") : [];
+  const exampleFurigana = fields.WordFurigana ? fields.WordFurigana.split(",") : [];
+
+  let j = 0; // index for furigana
+  const wordExamplePairs = exampleWords.map((word, index) => {
+    const furiganaForWord = [];
+    for (const char of word) {
+      if (char.match(/[\u4e00-\u9faf]/)) {
+        furiganaForWord.push(exampleFurigana[j] || "");
+        j++;
+      } else {
+        furiganaForWord.push("");
+      }
+    }
+    const wordWithFurigana = generateFuriganaSentence(word, furiganaForWord);
+    return `<span class="word-section">${wordWithFurigana} ➔ ${exampleTranslations[index] || ""}</span><br>`;
+  });
+
+  document.getElementById("word_examples").innerHTML = wordExamplePairs.join("");
+  document.getElementById("radicals").innerText = "Radicals: " + (fields.Radicals || "N/A");
+}
+
+function generateFuriganaSentence(sentence, furiganaArray) {
+  let output = "";
+  let j = 0;
+  for (const char of sentence) {
+    if (char.match(/[\u4e00-\u9faf]/)) {  // Check if the character is Kanji
+      output += `<ruby>${char}<rt>${furiganaArray[j] || ""}</rt></ruby>`;
+      j++;
+    } else {
+      // If not Kanji, add character without furigana
+      output += char;
+    }
+  }
+  return output;
+}
+
+updateBack();
+onUpdateHook.push(updateBack);
+
+</script>

@@ -1,0 +1,29 @@
+<div id="content-src" style="display:none;">{{Content}}</div>
+<div id="front" class="hanzi-style"></div>
+
+<script>
+(function () {
+  function parseContent() {
+    // Read via textContent so HTML tags/entities Anki adds never break parsing.
+    var raw = (document.getElementById("content-src").textContent || "")
+      .replace(/ /g, " ")
+      .trim();
+    var fields = {};
+    raw.split("|").forEach(function (pair) {
+      var idx = pair.indexOf(":");
+      if (idx > 0) {
+        fields[pair.slice(0, idx).trim()] = pair.slice(idx + 1).trim();
+      }
+    });
+    return fields;
+  }
+
+  function render() {
+    var f = parseContent();
+    document.getElementById("front").innerText = f.Hanzi || f.Kanji || "?";
+  }
+
+  render();
+  if (typeof onUpdateHook !== "undefined") onUpdateHook.push(render);
+})();
+</script>

@@ -1,0 +1,83 @@
+<!-- Front Template Section -->
+<div id="front" class="sentence-style"></div>
+
+<!-- Spacer -->
+<div class="spacer"></div>
+
+<!-- Back Template Section -->
+<div id="back" class="word-style">
+  <div id="translation" class="word-style"></div>
+  <div id="notes" class="word-style"></div>
+</div>
+
+<script>
+const KANJI_REGEX = /[\u4e00-\u9faf]/;
+
+// Remove spaces before Kanji
+const removeSpacesBeforeKanji = str => str.replace(/\s(?=[\u4e00-\u9faf])/g, "");
+
+// Create sentence with furigana
+function generateFuriganaSentence(chars, furigana) {
+  let result = "";
+  let fIndex = 0;
+  for (const ch of chars) {
+    if (KANJI_REGEX.test(ch)) {
+      result += `<ruby>${ch}<rt>${furigana[fIndex] || ""}</rt></ruby>`;
+      fIndex++;
+    } else {
+      result += ch;
+    }
+  }
+  return result;
+}
+
+function updateCard() {
+  const input = "{{Content}}";
+  if (!input.includes("|")) {
+    console.error("Invalid input format");
+    return;
+  }
+
+  // Parse input into key:value pairs
+  const fields = Object.fromEntries(
+    input.split("|").map(pair => {
+      const [k, ...rest] = pair.split(":");
+      return [k, rest.join(":")];
+    })
+  );
+
+  // Sentence and Furigana processing
+  const sentence = removeSpacesBeforeKanji(
+    (fields.Sentence || fields.Expression || fields.Text || "").trim()
+  );
+  // Replace spaces in Furigana with commas
+  const furiganaArray = fields.Furigana ? fields.Furigana.trim().split(/\s+/) : [];
+  const furiganaWithCommas = fields.Furigana ? fields.Furigana.trim().replace(/\s+/g, ",") : "";
+
+  // Front
+  document.getElementById("front").innerHTML =
+    generateFuriganaSentence([...sentence], furiganaArray);
+
+  // Back - Translation
+  document.getElementById("translation").innerText = fields.Translation || "";
+
+  // Notes - Words + Furigana + Translations
+  const words = fields.Words ? fields.Words.split(",") : [];
+  const furiganaList = furiganaWithCommas.split(",");
+  const translations = fields.WordTranslations ? fields.WordTranslations.split(",") : [];
+
+  let fIndex = 0;
+  const notesHTML = words.map((word, i) => {
+    const wordFurigana = [...word].map(ch =>
+      KANJI_REGEX.test(ch) ? furiganaList[fIndex++] : ""
+    );
+    const wordWithFurigana = generateFuriganaSentence([...word], wordFurigana);
+    return `<span class="word-section">${wordWithFurigana} ➔ ${translations[i] || ""}</span><br>`;
+  });
+
+  document.getElementById("notes").innerHTML = notesHTML.join("");
+}
+
+updateCard();
+onUpdateHook.push(updateCard);
+</script>

@@ -1,0 +1,79 @@
+/* 汉字 note type — same visual language as the Japanese 漢字 cards,
+   with a Chinese font stack and pinyin ruby styling. */
+
+.card {
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "SimHei", sans-serif;
+}
+
+/* Front / hanzi box (green) */
+#front,
+#hanzi-ruby {
+  font-size: 48px;
+  text-align: center;
+  color: #4b0082;
+  padding: 20px;
+  background-color: #b2d8b2;
+  border-radius: 15px;
+  border: 2px solid #3cb371;
+}
+
+/* Back box (peach) */
+#back {
+  background-color: #ffebcd;
+  border: 2px solid #ff7f50;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.meaning-style {
+  font-size: 30px;
+  color: #8a2be2;
+}
+
+.words-style {
+  font-size: 26px;
+  color: #009688;
+  margin-top: 12px;
+}
+
+.sentence-style {
+  font-size: 30px;
+  color: #4b0082;
+  margin-top: 16px;
+}
+
+.sentence-meaning-style {
+  font-size: 20px;
+  color: #20b2aa;
+  margin-top: 4px;
+}
+
+.radicals-style {
+  font-size: 24px;
+  color: #da70d6;
+  margin-top: 12px;
+}
+
+/* Pinyin above hanzi */
+ruby rt {
+  font-size: 0.42em;
+  color: #c71585;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.spacer {
+  height: 20px;
+}
+
+/* Night mode */
+.night_mode #front,
+.night_mode #hanzi-ruby {
+  background-color: #2f4f2f;
+  color: #e6d5ff;
+}
+
+.night_mode #back {
+  background-color: #4a3524;
+}

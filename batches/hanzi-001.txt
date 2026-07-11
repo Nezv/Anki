@@ -1,0 +1,5 @@
+#notetype: hanzi
+#deck: 汉语
+#tags: hsk1
+Hanzi:不|Pinyin:bù|Meaning:not, no|Words:不是,不好,不要|WordPinyin:bù shì,bù hǎo,bù yào|WordMeanings:is not,not good,don't want|Radicals:一 丿|Sentence:我不是学生。|SentencePinyin:wǒ bù shì xué shēng|SentenceMeaning:I am not a student.
+Hanzi:是|Pinyin:shì|Meaning:to be, is|Words:是的,不是,但是|WordPinyin:shì de,bù shì,dàn shì|WordMeanings:yes,is not,but|Radicals:日 疋|Sentence:他是我的朋友。|SentencePinyin:tā shì wǒ de péng yǒu|SentenceMeaning:He is my friend.

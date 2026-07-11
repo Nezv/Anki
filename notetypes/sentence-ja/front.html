@@ -1,0 +1,22 @@
+<div id="front" class="sentence-style"></div>
+<script>
+function updateFront() {
+  const input = "{{Content}}";
+
+  if (!input || !input.includes("|")) {
+    console.error("Invalid input format");
+    return;
+  }
+  
+  const fields = input.split("|").reduce((acc, field) => {
+    const [key, value] = field.split(":");
+    acc[key] = value;
+    return acc;
+  }, {});
+  
+  document.getElementById("front").innerText = fields.Sentence || fields.Expression || fields.Text;
+}
+
+updateFront();
+onUpdateHook.push(updateFront);
+</script>

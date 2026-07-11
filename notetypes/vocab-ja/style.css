@@ -1,0 +1,72 @@
+/* Font Imports */
+@font-face {
+  font-family: 'Alef-Bold';
+  src: url('Alef-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'NotoSansJP-ExtraBold';
+  src: url('NotoSansJP-ExtraBold.ttf') format('truetype');
+}
+
+/* General Back Styles */
+#back {
+  background-color: #ffebcd;
+  border: 2px solid #ff7f50;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+/* Word Styles */
+.word-style {
+  text-align: center;
+  font-size: 45px;
+  font-family: 'NotoSansJP-ExtraBold';
+  color: #4b0082;
+}
+
+/* Sentence Styles */
+.sentence-style {
+  text-align: center;
+  font-size: 36px;
+  font-family: 'NotoSansJP-ExtraBold';
+  color: #4b0082;
+}
+
+/* Translation Styles */
+#translation {
+  font-size: 28px;
+  color: #8a2be2;
+  text-align: center;
+  font-family: 'NotoSansJP-ExtraLight';
+}
+
+/* Sentence Styles */
+#example_with_furigana{
+  text-align: left;
+  padding-left: 10px;
+  font-size: 28px;
+  color: #20b2aa;
+  font-family: 'NotoSansJP-ExtraBold'; /* New Font */
+}
+
+/* Sentence Translation */ #example_translation {
+  text-align: left;
+  padding-left: 10px;
+  font-size: 22px;
+  color: #20b2aa;
+  font-family: 'NotoSansJP-ExtraLight'; /* New Font */
+}
+
+/* Additional Elements */
+.spacer {
+  height: 20px;
+}
+
+/* Green Padding */
+#front, #word_with_kana {
+  padding: 20px;
+  background-color: #B2D8B2;
+  border-radius: 15px;
+  border: 2px solid #3cb371;
+}

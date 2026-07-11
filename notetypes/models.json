@@ -1,0 +1,36 @@
+{
+  "_comment": "Stable IDs so re-imports UPDATE existing notes/decks instead of duplicating. Japanese model/deck IDs match the live collection; hanzi is new. Never change an ID after first import.",
+  "notetypes": {
+    "hanzi": {
+      "name": "汉字",
+      "model_id": 1752200000001,
+      "guid_key": "Hanzi",
+      "default_deck": "汉语"
+    },
+    "kanji-ja": {
+      "name": "漢字",
+      "model_id": 1696457024193,
+      "guid_key": "Kanji",
+      "default_deck": "日本語::漢字"
+    },
+    "vocab-ja": {
+      "name": "言葉",
+      "model_id": 1696338913993,
+      "guid_key": "Word",
+      "default_deck": "日本語::言葉"
+    },
+    "sentence-ja": {
+      "name": "分達",
+      "model_id": 1696457013620,
+      "guid_key": "Sentence",
+      "default_deck": "日本語::分達"
+    }
+  },
+  "decks": {
+    "汉语": 1765672709154,
+    "日本語::漢字": 1696339373032,
+    "日本語::言葉": 1696336571029,
+    "日本語::分達": 1696339536751,
+    "日本語::常用漢字": 1706373503783
+  }
+}

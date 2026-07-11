@@ -1,0 +1,52 @@
+<div id="word_with_kana" class="word-style"></div>
+<div class="spacer"></div>
+<div id="back">
+  <div id="translation" class="word-style"></div>
+  <div id="example_with_furigana"></div>
+  <div id="example_translation"></div>
+
+<script>
+
+
+
+function isKanji(ch) {
+  return /[\u4e00-\u9faf]/.test(ch);
+}
+
+function alignFurigana(example, furigana) {
+  const exampleChars = example.split(/([\u4e00-\u9faf]+|\s+)/).filter(Boolean);
+  const furiganaChars = furigana.split(' ');
+  let furiganaIndex = 0;
+
+  return exampleChars.map((char) => {
+    if (isKanji(char)) {
+      return `<ruby>${char}<rt>${furiganaChars[furiganaIndex++] || ''}</rt></ruby>`;
+    }
+    return char;
+  }).join('');
+}
+
+
+
+function updateBack() {
+  const input = "{{Content}}".replace(/&nbsp;/g, ' ');
+  const fields = input.split("|").reduce((acc, field) => {
+    const [key, value] = field.split(":");
+    acc[key.trim()] = value.trim();
+    return acc;
+  }, {});
+  
+  const exampleWithFurigana = alignFurigana(fields.Example, fields.Furigana);
+  
+  document.getElementById("word_with_kana").innerHTML = `<ruby>${fields.Word}<rt>${fields.Kana}</rt></ruby>`;
+  document.getElementById("translation").innerText = fields.Translation;
+  document.getElementById("example_with_furigana").innerHTML = exampleWithFurigana;
+  document.getElementById("example_translation").innerText = fields.ExampleTranslation;
+}
+
+updateBack();
+onUpdateHook.push(updateBack);
+
+
+
+</script>

@@ -1,0 +1,29 @@
+<div id="front" class="word-style"></div>
+<script>
+
+
+function updateFront() {
+  const input = "{{Content}}";
+  
+  // Error handling for invalid input
+  if (!input || !input.includes("|")) {
+    console.error("Invalid input format");
+    return;
+  }
+  
+  const fields = input.split("|").reduce((acc, field) => {
+    const [key, value] = field.split(":");
+    acc[key] = value;
+    return acc;
+  }, {});
+  
+  // Populate the front field
+  document.getElementById("front").innerText = fields.Word || fields.Character || fields.Japanese;
+}
+
+updateFront();
+onUpdateHook.push(updateFront);
+
+
+
+</script>

@@ -1,0 +1,54 @@
+@font-face {
+  font-family: 'Noto Sans JP';
+  src: url('NotoSansJP-ExtraBold.ttf') format('opentype');
+}
+
+/* Front Section */
+#front{
+  padding: 20px; background-color: #B2D8B2; border-radius: 15px; border: 2px solid #3cb371; font-family: 'Noto Sans JP';
+}
+
+/* General Styles */
+#back {
+  background-color: #ffebcd; border: 2px solid #ff7f50; padding: 20px; border-radius: 10px;
+}
+
+/* Kanji Style */
+.kanji-style {
+  font-size: 48px; text-align: center; font-family: 'Noto Sans JP'; color: #4b0082; padding: 20px; background-color: #B2D8B2; border-radius: 15px; border: 2px solid #3cb371;
+}
+
+/* Meaning Section */
+.meaning-style {
+  font-size: 30px; color: #8a2be2; font-family: 'Noto Sans JP';
+}
+
+/* Readings Section */
+.readings-style {
+  font-size: 24px; color: #009688; font-family: 'Noto Sans JP';
+}
+
+/* Examples Section */
+.example-style {
+  font-size: 24px; color: #8a2be2;
+}
+
+/* Radicals Section */
+.radicals-style {
+  font-size: 24px; color: #da70d6;
+}
+
+/* Sentence Style */
+.sentence-style {
+  text-align: center; font-size: 40px; font-family: 'Noto Sans JP'; color: #4b0082;
+}
+
+/* Spacing */
+.spacer {
+  height: 20px;
+}
+
+/* Furigana */
+ruby rt {
+  max-width: 1em; white-space: nowrap; text-overflow: ellipsis;
+}
