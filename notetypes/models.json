@@ -7,6 +7,14 @@
       "guid_key": "Hanzi",
       "default_deck": "汉语"
     },
+    "sentence-zh": {
+      "name": "汉语句子",
+      "model_id": 1752200000002,
+      "guid_key": "Sentence",
+      "default_deck": "Chinese::Sentences",
+      "fields": ["Content", "Audio"],
+      "media_fields": { "Audio": "Audio" }
+    },
     "kanji-ja": {
       "name": "漢字",
       "model_id": 1696457024193,
@@ -28,6 +36,7 @@
   },
   "decks": {
     "汉语": 1765672709154,
+    "Chinese::Sentences": 1765672709155,
     "日本語::漢字": 1696339373032,
     "日本語::言葉": 1696336571029,
     "日本語::分達": 1696339536751,

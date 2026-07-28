@@ -1,0 +1,71 @@
+.card {
+  background-color: #fdfaf5;
+}
+
+ruby rt {
+  font-size: 0.45em;
+  color: #c1440e;
+  white-space: nowrap;
+}
+
+/* Front Section */
+#front {
+  padding: 20px;
+  background-color: #ffe4c4;
+  border: 2px solid #d2691e;
+  border-radius: 15px;
+}
+
+.sentence-style {
+  text-align: center;
+  font-size: 34px;
+  line-height: 1.9;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  color: #4b0082;
+}
+
+/* Audio */
+.audio-slot {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 26px;
+}
+
+/* Back Section */
+#back {
+  background-color: #ffebcd;
+  border: 2px solid #ff7f50;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+#translation {
+  font-size: 24px;
+  color: #8a2be2;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+#source {
+  font-size: 16px;
+  color: #a0785a;
+  text-align: center;
+  font-style: italic;
+  margin-bottom: 16px;
+}
+
+.word-section {
+  font-size: 22px;
+  color: #009688;
+  line-height: 2;
+}
+
+#notes {
+  text-align: left;
+  padding-left: 10px;
+}
+
+/* Spacing */
+.spacer {
+  height: 20px;
+}

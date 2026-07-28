@@ -1,0 +1,24 @@
+<div id="data" style="display:none">{{text:Content}}</div>
+
+<div id="front" class="sentence-style"></div>
+<div id="audio" class="audio-slot">{{Audio}}</div>
+
+<script>
+function parseContent() {
+  const raw = (document.getElementById("data").textContent || "").trim();
+  return Object.fromEntries(
+    raw.split("|").map(pair => {
+      const i = pair.indexOf(":");
+      return i === -1 ? [pair.trim(), ""] : [pair.slice(0, i).trim(), pair.slice(i + 1).trim()];
+    })
+  );
+}
+
+function updateFront() {
+  const fields = parseContent();
+  document.getElementById("front").innerText = fields.Sentence || "";
+}
+
+updateFront();
+if (typeof onUpdateHook !== "undefined") onUpdateHook.push(updateFront);
+</script>
