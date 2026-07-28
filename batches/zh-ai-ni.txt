@@ -1,0 +1,21 @@
+#notetype: sentence-zh
+#deck: Chinese::Sentences
+#tags: song lyrics
+Sentence:又是一年而已|Pinyin:yòu shì yì nián ér yǐ|Translation:Just another year gone by
+Sentence:还是会想起你|Pinyin:hái shì huì xiǎng qǐ nǐ|Translation:I still find myself thinking of you
+Sentence:不远也不近 适当的距离|Pinyin:bù yuǎn yě bú jìn shì dàng de jù lí|Translation:Not far, not close — just the right distance
+Sentence:看你微笑别离|Pinyin:kàn nǐ wēi xiào bié lí|Translation:Watching you smile as you leave
+Sentence:天空正下着雨|Pinyin:tiān kōng zhèng xià zhe yǔ|Translation:It's raining out
+Sentence:真像当时的天气|Pinyin:zhēn xiàng dāng shí de tiān qì|Translation:Just like the weather back then
+Sentence:他们总提起那时的孩子气|Pinyin:tā men zǒng tí qǐ nà shí de hái zi qì|Translation:They always bring up how childish we were then
+Sentence:像你从未离去|Pinyin:xiàng nǐ cóng wèi lí qù|Translation:As if you had never left
+Sentence:爱你 你是我最爱的你|Pinyin:ài nǐ nǐ shì wǒ zuì ài de nǐ|Translation:Love you — you are the one I love most
+Sentence:哪怕世界崩塌我也爱你|Pinyin:nǎ pà shì jiè bēng tā wǒ yě ài nǐ|Translation:Even if the world collapsed, I would still love you
+Sentence:可惜回不去曾经|Pinyin:kě xī huí bu qù céng jīng|Translation:A shame there is no going back to what we were
+Sentence:凌晨听你发过的语音消息|Pinyin:líng chén tīng nǐ fā guò de yǔ yīn xiāo xi|Translation:In the small hours, listening to the voice messages you sent
+Sentence:收藏夹里的爱意|Pinyin:shōu cáng jiā lǐ de ài yì|Translation:The love kept in my saved folder
+Sentence:好想你|Pinyin:hǎo xiǎng nǐ|Translation:I miss you so much
+Sentence:还是那个路口|Pinyin:hái shì nà ge lù kǒu|Translation:Still that same intersection
+Sentence:反复驻足了多久|Pinyin:fǎn fù zhù zú le duō jiǔ|Translation:How long have I stood here, over and over
+Sentence:何时才能够适当的收手|Pinyin:hé shí cái néng gòu shì dàng de shōu shǒu|Translation:When will I finally know when to let go
+Sentence:早已无处苛求|Pinyin:zǎo yǐ wú chù kē qiú|Translation:There has long been nothing left to ask for
