@@ -46,7 +46,18 @@ def parse_line(line):
     return fields
 
 
-def check_file(path, registry, problems):
+def check_coverage(fields, notetype, where, problems):
+    """Every hanzi in the sentence should appear in some glossed word."""
+    if notetype != "sentence-zh" or not fields.get("Words"):
+        return
+    sentence = set(CJK_RE.findall(fields.get("Sentence", "")))
+    glossed = set(CJK_RE.findall(fields["Words"].replace(",", "")))
+    missing = sentence - glossed
+    if missing:
+        problems.append(f"{where}: no gloss covers {''.join(sorted(missing))}")
+
+
+def check_file(path, registry, problems, coverage=False):
     notetype = None
     for lineno, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
         line = raw.strip()
@@ -103,11 +114,17 @@ def check_file(path, registry, problems):
                             f"{syllables} syllables ('{pinyin.strip()}')"
                         )
 
+        if coverage:
+            check_coverage(fields, notetype, where, problems)
+
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("batches", nargs="*", help="batch files (default: all of batches/)")
+    ap.add_argument("--coverage", action="store_true",
+                    help="also require every hanzi in a sentence-zh Sentence to be "
+                         "covered by a glossed word")
     args = ap.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -122,7 +139,7 @@ def main():
 
     problems = []
     for path in paths:
-        check_file(path, registry, problems)
+        check_file(path, registry, problems, coverage=args.coverage)
 
     if problems:
         for problem in problems:
