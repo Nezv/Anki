@@ -1,24 +1,44 @@
-<div id="data" style="display:none">{{text:Content}}</div>
-
-<div id="front" class="sentence-style"></div>
-<div id="audio" class="audio-slot">{{Audio}}</div>
+<div class="zh-card" lang="zh-Hans">
+  <div class="zh-data" hidden>{{text:Content}}</div>
+  <div class="zh-sentence sentence-style"></div>
+  <div class="audio-slot">{{Audio}}</div>
+</div>
 
 <script>
-function parseContent() {
-  const raw = (document.getElementById("data").textContent || "").trim();
-  return Object.fromEntries(
-    raw.split("|").map(pair => {
-      const i = pair.indexOf(":");
-      return i === -1 ? [pair.trim(), ""] : [pair.slice(0, i).trim(), pair.slice(i + 1).trim()];
-    })
-  );
-}
+// Wrapped in an IIFE: Anki re-runs template scripts in the same global scope
+// as you move between cards, so any top-level `const`/`let` would throw
+// "already been declared" on the second card and blank the whole card.
+(function () {
+  "use strict";
 
-function updateFront() {
-  const fields = parseContent();
-  document.getElementById("front").innerText = fields.Sentence || "";
-}
+  function parseContent(raw) {
+    var fields = {};
+    raw.split("|").forEach(function (segment) {
+      var i = segment.indexOf(":");
+      if (i !== -1) fields[segment.slice(0, i).trim()] = segment.slice(i + 1).trim();
+    });
+    return fields;
+  }
 
-updateFront();
-if (typeof onUpdateHook !== "undefined") onUpdateHook.push(updateFront);
+  function render() {
+    var card = document.querySelector(".zh-card");
+    if (!card) return;
+    var data = card.querySelector(".zh-data");
+    var target = card.querySelector(".zh-sentence");
+    if (!data || !target) return;
+
+    var raw = (data.textContent || "").trim();
+    try {
+      var fields = parseContent(raw);
+      // textContent, not innerHTML — the sentence is plain text and must not
+      // be interpreted as markup.
+      target.textContent = fields.Sentence || raw;
+    } catch (e) {
+      target.textContent = raw; // degrade to the raw string rather than a blank card
+    }
+  }
+
+  render();
+  if (typeof onUpdateHook !== "undefined") onUpdateHook.push(render);
+})();
 </script>
