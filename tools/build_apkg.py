@@ -42,7 +42,7 @@ def build_model(slug, spec):
     return genanki.Model(
         spec["model_id"],
         spec["name"],
-        fields=[{"name": "Content"}],
+        fields=[{"name": name} for name in spec.get("fields", ["Content"])],
         templates=[
             {
                 "name": "Card 1",
@@ -62,9 +62,36 @@ def extract_key(content, guid_key):
     return content  # fall back to the whole line
 
 
+def split_media_fields(content, spec):
+    """Pull media keys out of the pipe-string into their own Anki fields.
+
+    A notetype with `media_fields: {"Audio": "Audio"}` turns
+    `Sentence:我爱你|Audio:zh-ab12.mp3` into
+    Content=`Sentence:我爱你`, Audio=`[sound:zh-ab12.mp3]`.
+
+    Returns (content_without_media_segments, {field_name: value}, [filenames]).
+    """
+    media_fields = spec.get("media_fields", {})
+    if not media_fields:
+        return content, {}, []
+
+    values, filenames = {}, []
+    for field_name, key in media_fields.items():
+        pattern = rf"(?:^|\|)\s*{re.escape(key)}\s*:\s*([^|]*)"
+        m = re.search(pattern, content)
+        filename = m.group(1).strip() if m else ""
+        if m:
+            # Drop the segment (and its leading separator) from Content.
+            content = (content[: m.start()] + content[m.end() :]).strip("|").strip()
+        values[field_name] = f"[sound:{filename}]" if filename else ""
+        if filename:
+            filenames.append(filename)
+    return content, values, filenames
+
+
 class ContentNote(genanki.Note):
-    def __init__(self, model, content, guid_seed, tags):
-        super().__init__(model=model, fields=[content], tags=tags)
+    def __init__(self, model, fields, guid_seed, tags):
+        super().__init__(model=model, fields=fields, tags=tags)
         self._guid_seed = guid_seed
 
     @property
@@ -114,12 +141,17 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", default=str(REPO_ROOT / "out"), help="output directory")
     ap.add_argument("--batches", default=str(REPO_ROOT / "batches"), help="batch files directory")
+    ap.add_argument("--media", default=str(REPO_ROOT / "media"),
+                    help="directory holding audio referenced by media fields")
     args = ap.parse_args()
 
     registry = load_registry()
+    media_dir = Path(args.media)
     models = {}
     decks = {}
     counts = {}
+    media_files = []
+    missing_media = []
 
     for deck_name, slug, content, tags in parse_batches(Path(args.batches), registry):
         if slug not in models:
@@ -129,21 +161,44 @@ def main():
             decks[deck_name] = genanki.Deck(deck_id, deck_name)
         spec = registry["notetypes"][slug]
         guid_seed = f"{spec['name']}\x1f{extract_key(content, spec['guid_key'])}"
-        decks[deck_name].add_note(ContentNote(models[slug], content, guid_seed, tags))
+
+        content, media_values, filenames = split_media_fields(content, spec)
+        for filename in filenames:
+            path = media_dir / filename
+            if path.is_file():
+                media_files.append(str(path))
+            else:
+                missing_media.append(filename)
+
+        fields = [content] + [media_values.get(name, "")
+                              for name in spec.get("fields", ["Content"])[1:]]
+        decks[deck_name].add_note(ContentNote(models[slug], fields, guid_seed, tags))
         counts[deck_name] = counts.get(deck_name, 0) + 1
 
     if not decks:
         sys.exit("No notes found in any batch file.")
 
+    if missing_media:
+        print(f"WARNING: {len(missing_media)} media file(s) missing from {media_dir}; "
+              f"those cards will have no audio:", file=sys.stderr)
+        for filename in missing_media[:10]:
+            print(f"  {filename}", file=sys.stderr)
+        if len(missing_media) > 10:
+            print(f"  ... and {len(missing_media) - 10} more", file=sys.stderr)
+
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.date.today().strftime("%Y-%m-%d")
     out_file = out_dir / f"anki-{stamp}.apkg"
-    genanki.Package(list(decks.values())).write_to_file(str(out_file))
+    package = genanki.Package(list(decks.values()))
+    package.media_files = sorted(set(media_files))
+    package.write_to_file(str(out_file))
 
     print(f"Wrote {out_file}")
     for deck_name, n in counts.items():
         print(f"  {deck_name}: {n} notes")
+    if package.media_files:
+        print(f"  media: {len(package.media_files)} file(s)")
 
 
 if __name__ == "__main__":
