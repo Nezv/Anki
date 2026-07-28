@@ -17,7 +17,9 @@ Engines (`--engine`):
                quality. Needs a GPU and the CosyVoice repo on PYTHONPATH.
                Voice comes from a reference clip: --ref-audio / --ref-text.
     kokoro     Kokoro-82M — Apache-2.0, runs on CPU. pip install kokoro
-               misaki[zh]; voices zf_xiaobei, zf_xiaoni, zm_yunjian, ...
+               "misaki[zh]"; voices zf_xiaobei, zf_xiaoni, zm_yunjian, ...
+               For the Chinese-specific model, add
+               --repo-id hexgrad/Kokoro-82M-v1.1-zh --voice zf_001
     melotts    MeloTTS — MIT, CPU real-time, handles zh/en code-switching well.
     edge       Microsoft Edge voices via edge-tts. NOT open source (a free
                cloud endpoint) — offered only as a zero-setup fallback.
@@ -73,9 +75,18 @@ def have_ffmpeg():
     return shutil.which("ffmpeg") is not None
 
 
+def require(module, install_hint):
+    """Import a backend's dependency, or explain how to install it."""
+    import importlib
+
+    try:
+        return importlib.import_module(module)
+    except ImportError:
+        sys.exit(f"This engine needs the '{module}' package:\n\n    pip install {install_hint}\n")
+
+
 def write_wav(path, samples, sample_rate=SAMPLE_RATE):
-    """Write float32/int16 mono samples to a wav without extra dependencies."""
-    import struct
+    """Write mono samples (numpy or torch, float or int16) to a wav."""
     import wave
 
     import numpy as np
@@ -88,7 +99,7 @@ def write_wav(path, samples, sample_rate=SAMPLE_RATE):
         f.setnchannels(1)
         f.setsampwidth(2)
         f.setframerate(sample_rate)
-        f.writeframes(struct.pack(f"<{len(data)}h", *data.tolist()))
+        f.writeframes(data.astype("<i2").tobytes())
 
 
 def to_mp3(wav_path, mp3_path):
@@ -105,8 +116,15 @@ def to_mp3(wav_path, mp3_path):
 
 def engine_cosyvoice(args):
     """CosyVoice 2 zero-shot cloning. Requires the CosyVoice repo on PYTHONPATH."""
-    from cosyvoice.cli.cosyvoice import CosyVoice2
-    from cosyvoice.utils.file_utils import load_wav
+    try:
+        from cosyvoice.cli.cosyvoice import CosyVoice2
+        from cosyvoice.utils.file_utils import load_wav
+    except ImportError:
+        sys.exit("CosyVoice isn't importable. It installs from source, not pip:\n\n"
+                 "    git clone --recursive https://github.com/FunAudioLLM/CosyVoice\n"
+                 "    pip install -r CosyVoice/requirements.txt\n"
+                 "    set PYTHONPATH=...\\CosyVoice;...\\CosyVoice\\third_party\\Matcha-TTS\n\n"
+                 "Easier: run colab/LyricsAudio.ipynb, which does all of this on a free GPU.\n")
 
     if not args.ref_audio:
         sys.exit("--engine cosyvoice needs --ref-audio (a 3-10s reference clip) "
@@ -126,14 +144,29 @@ def engine_cosyvoice(args):
 
 
 def engine_kokoro(args):
-    from kokoro import KPipeline
+    kokoro = require("kokoro", 'kokoro "misaki[zh]"')
+    require("misaki.zh", 'kokoro "misaki[zh]"')
 
-    pipeline = KPipeline(lang_code="z")  # 'z' = Mandarin Chinese
+    # Passing repo_id explicitly also suppresses kokoro's "defaulting repo_id" warning.
+    # The zf_*/zm_* named voices (zf_xiaobei, zm_yunjian, ...) live in Kokoro-82M;
+    # the Chinese-specific Kokoro-82M-v1.1-zh ships numbered voices (zf_001, zm_009, ...).
+    pipeline = kokoro.KPipeline(lang_code="z", repo_id=args.repo_id)  # 'z' = Mandarin
+    voice = args.voice or ("zf_001" if args.repo_id.endswith("-zh") else "zf_xiaobei")
 
     def synth(text, stem):
         import numpy as np
-        chunks = [audio for _, _, audio in pipeline(text, voice=args.voice or "zf_xiaobei",
-                                                    speed=args.speed)]
+
+        chunks = []
+        for result in pipeline(text, voice=voice, speed=args.speed):
+            # .audio is a property over .output and is None when synthesis produced
+            # nothing; older kokoro yielded a plain (graphemes, phonemes, audio) tuple.
+            audio = getattr(result, "audio", None)
+            if audio is None and not hasattr(result, "output"):
+                audio = result[2]
+            if audio is not None:
+                chunks.append(np.asarray(audio).squeeze())
+        if not chunks:
+            sys.exit(f"kokoro produced no audio for: {text}")
         wav = stem.with_suffix(".wav")
         write_wav(wav, np.concatenate(chunks), 24000)
         return wav
@@ -142,7 +175,8 @@ def engine_kokoro(args):
 
 
 def engine_melotts(args):
-    from melo.api import TTS
+    melo = require("melo.api", "git+https://github.com/myshell-ai/MeloTTS.git")
+    TTS = melo.TTS
 
     model = TTS(language="ZH", device=args.device)
     speaker_id = model.hps.data.spk2id["ZH"]
@@ -158,7 +192,7 @@ def engine_melotts(args):
 def engine_edge(args):
     import asyncio
 
-    import edge_tts
+    edge_tts = require("edge_tts", "edge-tts")
 
     voice = args.voice or "zh-CN-XiaoxiaoNeural"
 
@@ -194,6 +228,9 @@ def main():
     ap.add_argument("--voice", default=None, help="engine-specific voice id")
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--device", default="cpu", help="melotts: cpu / cuda / auto")
+    ap.add_argument("--repo-id", default="hexgrad/Kokoro-82M",
+                    help="kokoro: model repo. Use hexgrad/Kokoro-82M-v1.1-zh (with a "
+                         "numbered --voice like zf_001) for the Chinese-specific model")
     ap.add_argument("--model-dir", default="pretrained_models/CosyVoice2-0.5B",
                     help="cosyvoice: local model directory")
     ap.add_argument("--ref-audio", default=None, help="cosyvoice: reference wav to clone")
