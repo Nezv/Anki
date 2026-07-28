@@ -1,69 +1,119 @@
-<div id="data" style="display:none">{{text:Content}}</div>
+<div class="zh-card" lang="zh-Hans">
+  <div class="zh-data" hidden>{{text:Content}}</div>
 
-<div id="front" class="sentence-style"></div>
-<div id="audio" class="audio-slot">{{Audio}}</div>
+  <div class="zh-sentence sentence-style"></div>
+  <div class="audio-slot">{{Audio}}</div>
 
-<div class="spacer"></div>
+  <div class="spacer"></div>
 
-<div id="back">
-  <div id="translation"></div>
-  <div id="source"></div>
-  <div id="notes"></div>
+  <div class="zh-back">
+    <div class="zh-translation"></div>
+    <div class="zh-source"></div>
+    <div class="zh-notes"></div>
+  </div>
 </div>
 
 <script>
-const HANZI_REGEX = /[一-鿿㐀-䶿]/;
+// Wrapped in an IIFE: Anki re-runs template scripts in the same global scope
+// as you move between cards, so any top-level `const`/`let` would throw
+// "already been declared" on the second card and blank the whole card.
+(function () {
+  "use strict";
 
-function parseContent() {
-  const raw = (document.getElementById("data").textContent || "").trim();
-  return Object.fromEntries(
-    raw.split("|").map(pair => {
-      const i = pair.indexOf(":");
-      return i === -1 ? [pair.trim(), ""] : [pair.slice(0, i).trim(), pair.slice(i + 1).trim()];
-    })
-  );
-}
+  // CJK Unified Ideographs + Extension A. Punctuation and latin fall through
+  // unannotated, which is what keeps pinyin lined up with the hanzi.
+  var HANZI = /[一-鿿㐀-䶿]/;
 
-// Ruby-annotate every hanzi with the next pinyin syllable; other chars pass through.
-function withPinyin(text, syllables) {
-  let out = "";
-  let i = 0;
-  for (const ch of text) {
-    if (HANZI_REGEX.test(ch)) {
-      out += `<ruby>${ch}<rt>${syllables[i] || ""}</rt></ruby>`;
-      i++;
-    } else {
-      out += ch;
+  function parseContent(raw) {
+    var fields = {};
+    raw.split("|").forEach(function (segment) {
+      var i = segment.indexOf(":");
+      if (i !== -1) fields[segment.slice(0, i).trim()] = segment.slice(i + 1).trim();
+    });
+    return fields;
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  // Ruby-annotate each hanzi with the next syllable; everything else passes
+  // through untouched so the syllables stay aligned to the characters.
+  function withPinyin(text, syllables) {
+    var out = "";
+    var i = 0;
+    Array.prototype.forEach.call(text, function (ch) {
+      if (HANZI.test(ch)) {
+        var rt = syllables[i] === undefined ? "" : syllables[i];
+        out += "<ruby>" + escapeHtml(ch) + "<rt>" + escapeHtml(rt) + "</rt></ruby>";
+        i++;
+      } else {
+        out += escapeHtml(ch);
+      }
+    });
+    return out;
+  }
+
+  function splitList(value) {
+    return value ? value.split(",") : [];
+  }
+
+  // Hide a section entirely when it has nothing to show, so short notes don't
+  // leave empty boxes behind.
+  function setSection(el, html) {
+    if (!el) return;
+    el.innerHTML = html;
+    el.style.display = html ? "" : "none";
+  }
+
+  function render() {
+    var card = document.querySelector(".zh-card");
+    if (!card) return;
+    var data = card.querySelector(".zh-data");
+    if (!data) return;
+
+    var raw = (data.textContent || "").trim();
+    var sentenceEl = card.querySelector(".zh-sentence");
+
+    try {
+      var fields = parseContent(raw);
+      var sentence = (fields.Sentence || "").trim();
+      var syllables = fields.Pinyin ? fields.Pinyin.trim().split(/\s+/) : [];
+
+      if (sentenceEl) sentenceEl.innerHTML = withPinyin(sentence, syllables);
+
+      setSection(card.querySelector(".zh-translation"),
+                 fields.Translation ? escapeHtml(fields.Translation) : "");
+      setSection(card.querySelector(".zh-source"),
+                 fields.Source ? escapeHtml(fields.Source) : "");
+
+      // Words / WordPinyin / WordMeanings are parallel comma-separated lists.
+      var words = splitList(fields.Words);
+      var wordPinyin = splitList(fields.WordPinyin);
+      var meanings = splitList(fields.WordMeanings);
+
+      var notes = words.map(function (word, i) {
+        var pinyin = (wordPinyin[i] || "").trim();
+        var annotated = withPinyin(word.trim(), pinyin ? pinyin.split(/\s+/) : []);
+        var meaning = escapeHtml((meanings[i] || "").trim());
+        return '<div class="word-section"><span class="word-hanzi">' + annotated +
+               '</span><span class="word-arrow">➔</span>' +
+               '<span class="word-meaning">' + meaning + "</span></div>";
+      }).join("");
+
+      setSection(card.querySelector(".zh-notes"), notes);
+
+      var back = card.querySelector(".zh-back");
+      if (back) back.style.display = (fields.Translation || fields.Source || notes) ? "" : "none";
+    } catch (e) {
+      // Degrade to the raw string rather than showing a blank card.
+      if (sentenceEl) sentenceEl.textContent = raw;
     }
   }
-  return out;
-}
 
-function updateCard() {
-  const fields = parseContent();
-  const sentence = (fields.Sentence || "").trim();
-  const syllables = fields.Pinyin ? fields.Pinyin.trim().split(/\s+/) : [];
-
-  document.getElementById("front").innerHTML = withPinyin(sentence, syllables);
-  document.getElementById("translation").innerText = fields.Translation || "";
-
-  const source = document.getElementById("source");
-  source.innerText = fields.Source || "";
-  source.style.display = fields.Source ? "" : "none";
-
-  // Words / WordPinyin / WordMeanings are optional, comma-separated and parallel.
-  const words = fields.Words ? fields.Words.split(",") : [];
-  const wordPinyin = fields.WordPinyin ? fields.WordPinyin.split(",") : [];
-  const meanings = fields.WordMeanings ? fields.WordMeanings.split(",") : [];
-
-  document.getElementById("notes").innerHTML = words
-    .map((word, i) => {
-      const p = (wordPinyin[i] || "").trim().split(/\s+/);
-      return `<span class="word-section">${withPinyin(word.trim(), p)} ➔ ${meanings[i] || ""}</span><br>`;
-    })
-    .join("");
-}
-
-updateCard();
-if (typeof onUpdateHook !== "undefined") onUpdateHook.push(updateCard);
+  render();
+  if (typeof onUpdateHook !== "undefined") onUpdateHook.push(render);
+})();
 </script>
