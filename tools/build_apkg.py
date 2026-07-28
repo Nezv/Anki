@@ -190,11 +190,17 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.date.today().strftime("%Y-%m-%d")
     out_file = out_dir / f"anki-{stamp}.apkg"
+    existed = out_file.is_file()
     package = genanki.Package(list(decks.values()))
     package.media_files = sorted(set(media_files))
     package.write_to_file(str(out_file))
 
-    print(f"Wrote {out_file}")
+    # The filename is date-stamped, so rebuilding on the same day replaces
+    # yesterday's-style clutter rather than piling up — say so, since an
+    # unchanged filename otherwise looks like nothing happened.
+    size_kb = out_file.stat().st_size / 1024
+    verb = "Replaced" if existed else "Wrote"
+    print(f"{verb} {out_file} ({size_kb:,.0f} KB)")
     for deck_name, n in counts.items():
         print(f"  {deck_name}: {n} notes")
     if package.media_files:
