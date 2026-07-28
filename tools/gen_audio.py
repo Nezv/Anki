@@ -17,7 +17,9 @@ Engines (`--engine`):
                quality. Needs a GPU and the CosyVoice repo on PYTHONPATH.
                Voice comes from a reference clip: --ref-audio / --ref-text.
     kokoro     Kokoro-82M — Apache-2.0, runs on CPU. pip install kokoro
-               misaki[zh]; voices zf_xiaobei, zf_xiaoni, zm_yunjian, ...
+               "misaki[zh]"; voices zf_xiaobei, zf_xiaoni, zm_yunjian, ...
+               For the Chinese-specific model, add
+               --repo-id hexgrad/Kokoro-82M-v1.1-zh --voice zf_001
     melotts    MeloTTS — MIT, CPU real-time, handles zh/en code-switching well.
     edge       Microsoft Edge voices via edge-tts. NOT open source (a free
                cloud endpoint) — offered only as a zero-setup fallback.
@@ -145,19 +147,28 @@ def engine_kokoro(args):
     kokoro = require("kokoro", 'kokoro "misaki[zh]"')
     require("misaki.zh", 'kokoro "misaki[zh]"')
 
-    pipeline = kokoro.KPipeline(lang_code="z")  # 'z' = Mandarin Chinese
-    voice = args.voice or "zf_xiaobei"
+    # Passing repo_id explicitly also suppresses kokoro's "defaulting repo_id" warning.
+    # The zf_*/zm_* named voices (zf_xiaobei, zm_yunjian, ...) live in Kokoro-82M;
+    # the Chinese-specific Kokoro-82M-v1.1-zh ships numbered voices (zf_001, zm_009, ...).
+    pipeline = kokoro.KPipeline(lang_code="z", repo_id=args.repo_id)  # 'z' = Mandarin
+    voice = args.voice or ("zf_001" if args.repo_id.endswith("-zh") else "zf_xiaobei")
 
     def synth(text, stem):
         import numpy as np
 
         chunks = []
         for result in pipeline(text, voice=voice, speed=args.speed):
-            # Older kokoro yields (graphemes, phonemes, audio); newer yields a Result.
+            # .audio is a property over .output and is None when synthesis produced
+            # nothing; older kokoro yielded a plain (graphemes, phonemes, audio) tuple.
             audio = getattr(result, "audio", None)
-            chunks.append(audio if audio is not None else result[2])
+            if audio is None and not hasattr(result, "output"):
+                audio = result[2]
+            if audio is not None:
+                chunks.append(np.asarray(audio).squeeze())
+        if not chunks:
+            sys.exit(f"kokoro produced no audio for: {text}")
         wav = stem.with_suffix(".wav")
-        write_wav(wav, np.concatenate([np.asarray(c).squeeze() for c in chunks]), 24000)
+        write_wav(wav, np.concatenate(chunks), 24000)
         return wav
 
     return synth
@@ -217,6 +228,9 @@ def main():
     ap.add_argument("--voice", default=None, help="engine-specific voice id")
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--device", default="cpu", help="melotts: cpu / cuda / auto")
+    ap.add_argument("--repo-id", default="hexgrad/Kokoro-82M",
+                    help="kokoro: model repo. Use hexgrad/Kokoro-82M-v1.1-zh (with a "
+                         "numbered --voice like zf_001) for the Chinese-specific model")
     ap.add_argument("--model-dir", default="pretrained_models/CosyVoice2-0.5B",
                     help="cosyvoice: local model directory")
     ap.add_argument("--ref-audio", default=None, help="cosyvoice: reference wav to clone")
