@@ -21,6 +21,7 @@ of creating duplicates.
 """
 import argparse
 import datetime
+import hashlib
 import json
 import re
 import sys
@@ -35,6 +36,24 @@ NOTETYPES_DIR = REPO_ROOT / "notetypes"
 def load_registry():
     with open(NOTETYPES_DIR / "models.json", encoding="utf-8") as f:
         return json.load(f)
+
+
+def deck_id(name, registry, warned):
+    """Stable numeric id for a deck name.
+
+    Registered decks keep the id pinned in models.json. Anything else is
+    derived from the name itself — Python's hash() is salted per process, so
+    an unregistered deck used to get a different id on every build and Anki
+    imported it as a brand-new deck each time.
+    """
+    known = registry["decks"].get(name)
+    if known:
+        return known
+    if name not in warned:
+        warned.add(name)
+        print(f"NOTE: deck '{name}' isn't in models.json; using a name-derived id. "
+              f"Add it to \"decks\" to pin it.", file=sys.stderr)
+    return int(hashlib.sha1(name.encode("utf-8")).hexdigest()[:12], 16) % (10**13)
 
 
 def build_model(slug, spec):
@@ -152,13 +171,14 @@ def main():
     counts = {}
     media_files = []
     missing_media = []
+    warned_decks = set()
 
     for deck_name, slug, content, tags in parse_batches(Path(args.batches), registry):
         if slug not in models:
             models[slug] = build_model(slug, registry["notetypes"][slug])
         if deck_name not in decks:
-            deck_id = registry["decks"].get(deck_name) or abs(hash(deck_name)) % (10**13)
-            decks[deck_name] = genanki.Deck(deck_id, deck_name)
+            decks[deck_name] = genanki.Deck(deck_id(deck_name, registry, warned_decks),
+                                            deck_name)
         spec = registry["notetypes"][slug]
         guid_seed = f"{spec['name']}\x1f{extract_key(content, spec['guid_key'])}"
 

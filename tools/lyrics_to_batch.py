@@ -84,6 +84,19 @@ def read_lines(path, max_len, keep_dupes):
 
 
 def slugify(text):
+    """ASCII slug for filenames and tags.
+
+    Chinese titles are romanised first: stripping non-ASCII outright made every
+    Chinese-titled song collapse onto the same 'song' slug, so each new song
+    overwrote the previous one's batch file and they all shared one tag.
+    """
+    if CJK_RE.search(text):
+        try:
+            from pypinyin import Style, lazy_pinyin
+
+            text = " ".join(lazy_pinyin(text, style=Style.NORMAL))
+        except ImportError:
+            pass  # fall through; the caller still gets a usable fallback
     ascii_only = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     return ascii_only or "song"
 
@@ -102,6 +115,8 @@ def main():
     ap.add_argument("--keep-dupes", action="store_true",
                     help="keep repeated lines (choruses) instead of deduplicating")
     ap.add_argument("--no-pinyin", action="store_true", help="leave Pinyin blank")
+    ap.add_argument("--force", action="store_true",
+                    help="overwrite the output file if it already exists")
     args = ap.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -112,12 +127,20 @@ def main():
         sys.exit(f"No Chinese lyric lines found in {args.lyrics}")
 
     source = " – ".join(p for p in (args.artist, args.title) if p).replace("|", "｜")
-    slug = slugify(args.title) if args.title else Path(args.lyrics).stem
-    out_path = Path(args.out) if args.out else REPO_ROOT / "batches" / f"zh-{slugify(slug)}.txt"
+    slug = slugify(args.title or Path(args.lyrics).stem)
+    out_path = Path(args.out) if args.out else REPO_ROOT / "batches" / f"zh-{slug}.txt"
+
+    # A finished batch holds hand-written translations, word glosses and the
+    # Audio: keys gen_audio.py patched in. None of that is recoverable from the
+    # lyrics, so never clobber it silently.
+    if out_path.exists() and not args.force:
+        sys.exit(f"{out_path} already exists.\n"
+                 f"It may hold translations, glosses and Audio: keys this would destroy.\n"
+                 f"Pass --force to overwrite it, or --out to write somewhere else.")
 
     tags = args.tags.split() if args.tags else ["song"]
     if args.title:
-        tags.append(f"song::{slugify(args.title)}")
+        tags.append(f"song::{slug}")
 
     header = ["#notetype: sentence-zh"]
     header.append(f"#deck: {args.deck}" if args.deck else "#deck: Chinese::Sentences")

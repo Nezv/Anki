@@ -107,14 +107,15 @@ ruby rt {
   margin-bottom: 14px;
 }
 
-/* Word list — hanzi column and meaning column, so the arrows line up. */
+/* Word list — hanzi column and meaning column, so the arrows line up.
+   The grid lives on the container, not on each row: one grid per row would
+   size its columns independently and leave the arrows ragged wherever a
+   two-hanzi word sat above a one-hanzi one. `display: contents` promotes each
+   row's three spans into this grid so every row shares the same columns. */
 .zh-notes {
   border-top: 1px solid rgba(210, 105, 30, 0.35);
   padding-top: 12px;
   text-align: left;
-}
-
-.word-section {
   display: grid;
   grid-template-columns: auto auto 1fr;
   gap: 0 8px;
@@ -122,6 +123,10 @@ ruby rt {
   color: var(--word);
   font-size: clamp(16px, 4.2vw, 21px);
   line-height: 2.2;
+}
+
+.word-section {
+  display: contents;
 }
 
 .word-hanzi {
